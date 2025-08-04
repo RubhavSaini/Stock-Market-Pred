@@ -26,7 +26,8 @@ PRETRAINED_MODELS = {
 @st.cache_data
 def load_stock_data(ticker):
 
-    df = yf.download(ticker, start="2015-01-01", end="2025-06-30")
+    # df = yf.download(ticker, start="2015-01-01", end="2025-06-30")
+    df = pd.read_csv(f"data/{ticker}.csv", index_col=0, parse_dates=True)
 
     # ✅ FLATTEN MULTIINDEX COLUMNS IF PRESENT
     if isinstance(df.columns, pd.MultiIndex):
