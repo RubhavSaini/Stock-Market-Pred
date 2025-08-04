@@ -1,6 +1,6 @@
 import plotly.express as px
 import ta
-
+import os
 import numpy as np
 import pandas as pd
 import yfinance as yf
@@ -26,9 +26,12 @@ PRETRAINED_MODELS = {
 @st.cache_data
 def load_stock_data(ticker):
 
-    # df = yf.download(ticker, start="2015-01-01", end="2025-06-30")
-    df = pd.read_csv(f"data/{ticker}.csv", index_col=0, parse_dates=True)
+    df = yf.download(ticker, start="2015-01-01", end="2025-06-30")
+    # filepath = os.path.join("data", f"{ticker}.csv")
 
+    # ✅ Load CSV
+    # df = pd.read_csv(filepath,header=[0, 1])
+    # st.write(df)
     # ✅ FLATTEN MULTIINDEX COLUMNS IF PRESENT
     if isinstance(df.columns, pd.MultiIndex):
         df.columns = ['_'.join(col).strip() for col in df.columns.values]
