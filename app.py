@@ -196,6 +196,9 @@ if run:
 
     if ticker in PRETRAINED_MODELS:
         model = load_model(PRETRAINED_MODELS[ticker])
+        st.write("Model input shape:", model.input_shape)  # e.g., (None, 60, 1)
+
+        st.write("Test data shape:", X.shape) 
         y_pred = model.predict(X_test)
 
         dummy_pad = np.zeros((len(y_test), scaled.shape[1] - 1))
