@@ -1,5 +1,5 @@
 # Stock-Market-Pred
-
+link for the live app- https://rubhavsaini-stock-market-pred-app-ozrhob.streamlit.app/
 ## 📈 Stock Price Prediction using GRU (Deep Learning with Streamlit)
 Developed a dynamic stock price forecasting web application using GRU (Gated Recurrent Unit) deep learning models and Streamlit. The app predicts future prices of selected NSE stocks by utilizing historical data and technical indicators including SMA, EMA, RSI, and MACD.
 
