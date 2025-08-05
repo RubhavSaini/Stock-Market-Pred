@@ -24,40 +24,85 @@ PRETRAINED_MODELS = {
 
 # ✅ Utilities
 @st.cache_data
+
+# this code for bringing data from yfinance
+
+# def load_stock_data(ticker):
+#
+#     df = yf.download(ticker, start="2015-01-01", end="2025-06-30")
+#     # filepath = os.path.join("data", f"{ticker}.csv")
+#
+#     # ✅ Load CSV
+#     # df = pd.read_csv(filepath, skiprows=2, parse_dates=["Date"])
+#     # df = pd.read_csv(filepath,header=[0, 1])
+#     # st.write(df)
+#     # ✅ FLATTEN MULTIINDEX COLUMNS IF PRESENT
+#     if isinstance(df.columns, pd.MultiIndex):
+#         df.columns = ['_'.join(col).strip() for col in df.columns.values]
+#
+#     # ✅ Rename common OHLCV if needed (e.g., Close_ADANIPORTS.NS → Close)
+#     for col in df.columns:
+#         if col.startswith("Open_"): df.rename(columns={col: "Open"}, inplace=True)
+#         if col.startswith("High_"): df.rename(columns={col: "High"}, inplace=True)
+#         if col.startswith("Low_"): df.rename(columns={col: "Low"}, inplace=True)
+#         if col.startswith("Close_"): df.rename(columns={col: "Close"}, inplace=True)
+#         if col.startswith("Volume_"): df.rename(columns={col: "Volume"}, inplace=True)
+#
+#     df = df[['Open', 'High', 'Low', 'Close', 'Volume']].dropna()
+#
+#     close_series = df['Close']
+#
+#     # ✅ Add Technical Indicators
+#     df['RSI'] = ta.momentum.RSIIndicator(close=close_series, window=14).rsi()
+#     df['SMA'] = ta.trend.SMAIndicator(close=close_series, window=20).sma_indicator()
+#     df['EMA'] = ta.trend.EMAIndicator(close=close_series, window=20).ema_indicator()
+#     macd = ta.trend.MACD(close=close_series)
+#     df['MACD'] = macd.macd()
+#     df['MACD_signal'] = macd.macd_signal()
+#     df['MACD_diff'] = macd.macd_diff()
+#
+#     df.dropna(inplace=True)
+#     return df
+
 def load_stock_data(ticker):
+    # 📁 Load from local CSV
+    filepath = os.path.join("data", f"{ticker}.csv")
 
-    df = yf.download(ticker, start="2015-01-01", end="2025-06-30")
-    # filepath = os.path.join("data", f"{ticker}.csv")
+    df = pd.read_csv(filepath, header=None)
 
-    # ✅ Load CSV
-    # df = pd.read_csv(filepath,header=[0, 1])
-    # st.write(df)
-    # ✅ FLATTEN MULTIINDEX COLUMNS IF PRESENT
-    if isinstance(df.columns, pd.MultiIndex):
-        df.columns = ['_'.join(col).strip() for col in df.columns.values]
+    # Extract column names from the first row
+    column_names = df.iloc[0].tolist()
 
-    # ✅ Rename common OHLCV if needed (e.g., Close_ADANIPORTS.NS → Close)
+    # Extract actual data starting from row 3 (i.e., index 3)
+    df = df.iloc[3:].copy()
+
+    # Assign the correct column names
+    df.columns = column_names
+
+    # Rename 'Price' to 'Date' and convert to datetime
+    df.rename(columns={"Price": "Date"}, inplace=True)
+    df["Date"] = pd.to_datetime(df["Date"], errors="coerce")
+    df.set_index("Date", inplace=True)
+
+    # Convert all other columns to numeric
     for col in df.columns:
-        if col.startswith("Open_"): df.rename(columns={col: "Open"}, inplace=True)
-        if col.startswith("High_"): df.rename(columns={col: "High"}, inplace=True)
-        if col.startswith("Low_"): df.rename(columns={col: "Low"}, inplace=True)
-        if col.startswith("Close_"): df.rename(columns={col: "Close"}, inplace=True)
-        if col.startswith("Volume_"): df.rename(columns={col: "Volume"}, inplace=True)
+        df[col] = pd.to_numeric(df[col], errors='coerce')
+    # st.write(df)
 
-    df = df[['Open', 'High', 'Low', 'Close', 'Volume']].dropna()
+    # 📈 Technical Indicators
+    close_series = df["Close"]
+    df["RSI"] = ta.momentum.RSIIndicator(close=close_series, window=14).rsi()
+    df["SMA"] = ta.trend.SMAIndicator(close=close_series, window=20).sma_indicator()
+    df["EMA"] = ta.trend.EMAIndicator(close=close_series, window=20).ema_indicator()
 
-    close_series = df['Close']
-
-    # ✅ Add Technical Indicators
-    df['RSI'] = ta.momentum.RSIIndicator(close=close_series, window=14).rsi()
-    df['SMA'] = ta.trend.SMAIndicator(close=close_series, window=20).sma_indicator()
-    df['EMA'] = ta.trend.EMAIndicator(close=close_series, window=20).ema_indicator()
     macd = ta.trend.MACD(close=close_series)
-    df['MACD'] = macd.macd()
-    df['MACD_signal'] = macd.macd_signal()
-    df['MACD_diff'] = macd.macd_diff()
+    df["MACD"] = macd.macd()
+    df["MACD_signal"] = macd.macd_signal()
+    df["MACD_diff"] = macd.macd_diff()
 
+    # 🧹 Drop rows with NaNs from indicators
     df.dropna(inplace=True)
+
     return df
 
 def create_sequences(data, time_step=60):
